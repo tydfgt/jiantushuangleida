@@ -113,8 +113,8 @@ ls -la /dev/ttyUSB* /dev/ttyCH34* /dev/rplidar /dev/serial/by-id/
 | SoC | Tegra234, 6核 Cortex-A78AE |
 | 内存 | 8GB 统一内存 + 8GB SSD swap |
 | 系统 | Ubuntu 22.04, L4T 36.5.0, JetPack 6 |
-| 雷达1 | SLAMTEC RPLidar C1 S/N: D606E0F6... |
-| 雷达2 | SLAMTEC RPLidar C1 S/N: F674E0F6... |
+| 雷达1 | SLAMTEC RPLidar C1 |
+| 雷达2 | SLAMTEC RPLidar C1 |
 | IMU | WIT 10-axis (加速度+角速度+姿态+磁力计) |
 
 ---

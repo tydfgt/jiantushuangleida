@@ -74,21 +74,21 @@ sudo apt purge brltty
 ```bash
 # 查看每个雷达的序列号
 udevadm info -a -n /dev/ttyUSB0 | grep serial
-# ATTRS{serial}=="b6079120cf6ff011a3ba90301045c30f"  → 雷达0
+# ATTRS{serial}=="xxxxxxxxxxxx"  → 雷达0 (替换为你的实际序列号)
 udevadm info -a -n /dev/ttyUSB1 | grep serial
-# ATTRS{serial}=="dc1ff222d36ff011ba5d95301045c30f"  → 雷达1
+# ATTRS{serial}=="yyyyyyyyyyyy"  → 雷达1 (替换为你的实际序列号)
 ```
 
 创建按序列号绑定的 udev 规则：
 
 ```bash
 # /etc/udev/rules.d/rplidar.rules
-# 雷达0 — S/N: b6079120
+# 雷达0 — 替换为你的序列号
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", \
-  ATTRS{serial}=="b6079120cf6ff011a3ba90301045c30f", MODE:="0777", SYMLINK+="rplidar0"
-# 雷达1 — S/N: dc1ff222
+  ATTRS{serial}=="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", MODE:="0777", SYMLINK+="rplidar0"
+# 雷达1 — 替换为你的序列号
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", \
-  ATTRS{serial}=="dc1ff222d36ff011ba5d95301045c30f", MODE:="0777", SYMLINK+="rplidar1"
+  ATTRS{serial}=="yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", MODE:="0777", SYMLINK+="rplidar1"
 ```
 
 ```bash
@@ -285,8 +285,8 @@ ros2 launch wit_ros2_imu sensors.launch.py \
 输出：
 
 ```
-[sllidar_node_0] SLLidar S/N: D606...   health status : OK.  ← 雷达0 ✅
-[sllidar_node_1] SLLidar S/N: F674...   health status : OK.  ← 雷达1 ✅
+[sllidar_node_0] SLLidar S/N: ...xxxx  health status : OK.  ← 雷达0 ✅
+[sllidar_node_1] SLLidar S/N: ...yyyy  health status : OK.  ← 雷达1 ✅
 [imu]            Serial port opened successfully...           ← IMU  ✅
 ```
 
