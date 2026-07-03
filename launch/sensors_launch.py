@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-协同启动文件：同时启动 RPLidar C1 激光雷达 + 10轴 IMU 惯导模块
-用法:
-  ros2 launch launch sensors_launch.py
-  ros2 launch launch sensors_launch.py lidar_port:=/dev/ttyUSB1 imu_port:=/dev/ttyCH341USB0
+独立版双雷达 + IMU + 时间同步 协同启动
+用法: ros2 launch $(pwd)/launch/sensors_launch.py
 """
 
 from launch import LaunchDescription
@@ -13,68 +11,40 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # ========== RPLidar C1 参数 ==========
-    lidar_port = LaunchConfiguration('lidar_port', default='/dev/ttyUSB1')
-    lidar_baudrate = LaunchConfiguration('lidar_baudrate', default='460800')
-    lidar_frame_id = LaunchConfiguration('lidar_frame_id', default='laser')
-
-    # ========== 10-axis IMU 参数 ==========
-    imu_port = LaunchConfiguration('imu_port', default='/dev/ttyCH341USB0')
-    imu_baudrate = LaunchConfiguration('imu_baudrate', default='9600')
-    imu_frame_id = LaunchConfiguration('imu_frame_id', default='imu_link')
+    lidar0_port = LaunchConfiguration('lidar0_port', default='/dev/ttyUSB0')
+    lidar1_port = LaunchConfiguration('lidar1_port', default='/dev/ttyUSB1')
+    imu_port    = LaunchConfiguration('imu_port', default='/dev/ttyCH341USB0')
 
     return LaunchDescription([
-        # ---- 雷达参数声明 ----
-        DeclareLaunchArgument(
-            'lidar_port', default_value=lidar_port,
-            description='RPLidar C1 串口设备'),
+        DeclareLaunchArgument('lidar0_port', default_value=lidar0_port),
+        DeclareLaunchArgument('lidar1_port', default_value=lidar1_port),
+        DeclareLaunchArgument('imu_port', default_value=imu_port),
 
-        DeclareLaunchArgument(
-            'lidar_baudrate', default_value=lidar_baudrate,
-            description='RPLidar C1 波特率'),
+        # 雷达0 → /scan_0
+        Node(package='sllidar_ros2', executable='sllidar_node',
+             name='sllidar_node_0', output='screen',
+             parameters=[{'channel_type': 'serial', 'serial_port': lidar0_port,
+                          'serial_baudrate': 460800, 'frame_id': 'laser_0',
+                          'inverted': False, 'angle_compensate': True,
+                          'scan_mode': 'Standard'}],
+             remappings=[('/scan', '/scan_0')]),
 
-        DeclareLaunchArgument(
-            'lidar_frame_id', default_value=lidar_frame_id,
-            description='RPLidar 坐标系 ID'),
+        # 雷达1 → /scan_1
+        Node(package='sllidar_ros2', executable='sllidar_node',
+             name='sllidar_node_1', output='screen',
+             parameters=[{'channel_type': 'serial', 'serial_port': lidar1_port,
+                          'serial_baudrate': 460800, 'frame_id': 'laser_1',
+                          'inverted': False, 'angle_compensate': True,
+                          'scan_mode': 'Standard'}],
+             remappings=[('/scan', '/scan_1')]),
 
-        # ---- IMU 参数声明 ----
-        DeclareLaunchArgument(
-            'imu_port', default_value=imu_port,
-            description='10轴 IMU 串口设备'),
+        # IMU → /imu/data_raw
+        Node(package='wit_ros2_imu', executable='wit_ros2_imu',
+             name='imu', output='screen',
+             parameters=[{'port': imu_port, 'baud': 9600}]),
 
-        DeclareLaunchArgument(
-            'imu_baudrate', default_value=imu_baudrate,
-            description='10轴 IMU 波特率'),
-
-        DeclareLaunchArgument(
-            'imu_frame_id', default_value=imu_frame_id,
-            description='IMU 坐标系 ID'),
-
-        # ========== RPLidar C1 节点 ==========
-        Node(
-            package='sllidar_ros2',
-            executable='sllidar_node',
-            name='sllidar_node',
-            output='screen',
-            parameters=[{
-                'serial_port': lidar_port,
-                'serial_baudrate': lidar_baudrate,
-                'frame_id': lidar_frame_id,
-                'inverted': False,
-                'angle_compensate': True,
-                'scan_mode': 'Standard',
-            }],
-        ),
-
-        # ========== 10-axis IMU 节点 ==========
-        Node(
-            package='wit_ros2_imu',
-            executable='wit_ros2_imu',
-            name='imu',
-            output='screen',
-            parameters=[{
-                'port': imu_port,
-                'baud': imu_baudrate,
-            }],
-        ),
+        # 时间同步 → /sync/*
+        Node(package='wit_ros2_imu', executable='time_sync',
+             name='time_sync', output='screen',
+             parameters=[{'sync_slop': 0.05}]),
     ])

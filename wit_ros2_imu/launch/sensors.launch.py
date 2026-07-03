@@ -80,4 +80,13 @@ def generate_launch_description():
             output='screen',
             parameters=[{'port': imu_port, 'baud': 9600}],
         ),
+
+        # ========== 时间同步 ==========
+        Node(
+            package='wit_ros2_imu',
+            executable='time_sync',
+            name='time_sync',
+            output='screen',
+            parameters=[{'sync_slop': 0.05}],  # 50ms 同步窗口
+        ),
     ])

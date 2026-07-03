@@ -22,7 +22,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'wit_ros2_imu = wit_ros2_imu.wit_ros2_imu:main'
+        'wit_ros2_imu = wit_ros2_imu.wit_ros2_imu:main',
+        'time_sync = wit_ros2_imu.time_sync:main',
         ],
     },
 )
