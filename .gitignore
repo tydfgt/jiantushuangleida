@@ -1,0 +1,36 @@
+# Build & install artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# Kernel modules
+*.ko
+*.o
+*.mod
+*.mod.c
+*.symvers
+*.order
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large source archives (keep if you need offline rebuild)
+opencv-4.10.0-src.part_*
+
+# Temporary files
+/tmp/
+*.swp
+*.swo
+*~
