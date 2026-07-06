@@ -137,6 +137,26 @@ class IMUDriverNode(Node):
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = 'imu_link'
 
+        # 设置协方差矩阵（非零值让 RViz2 正常显示）
+        # 姿态协方差: 0.01 rad² ≈ 5.7° 标准差
+        self.imu_msg.orientation_covariance = [
+            0.01, 0.0,  0.0,
+            0.0,  0.01, 0.0,
+            0.0,  0.0,  0.01,
+        ]
+        # 角速度协方差: 0.02 rad/s ≈ 8°/s 标准差
+        self.imu_msg.angular_velocity_covariance = [
+            0.02, 0.0,  0.0,
+            0.0,  0.02, 0.0,
+            0.0,  0.0,  0.02,
+        ]
+        # 加速度协方差: 0.1 m/s² 标准差
+        self.imu_msg.linear_acceleration_covariance = [
+            0.1,  0.0, 0.0,
+            0.0,  0.1, 0.0,
+            0.0,  0.0, 0.1,
+        ]
+
         # 创建IMU数据发布器
         self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
         #self.port = self.get_parameter('port')

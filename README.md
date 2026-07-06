@@ -32,6 +32,10 @@ colcon build --symlink-install
 # 5. 启动所有传感器
 source install/setup.bash
 ros2 launch wit_ros2_imu sensors.launch.py
+
+# 6. 启动 RViz 可视化（需有桌面环境）
+source install/setup.bash
+ros2 launch wit_ros2_imu show_dual_lidar.launch.py
 ```
 
 启动后话题一览：
@@ -40,7 +44,34 @@ ros2 launch wit_ros2_imu sensors.launch.py
 |------|--------|------|----------|
 | `/scan_0` | RPLidar C1 #0 | 10 Hz | `sensor_msgs/LaserScan` |
 | `/scan_1` | RPLidar C1 #1 | 10 Hz | `sensor_msgs/LaserScan` |
-| `/imu/data_raw` | 10轴 IMU | ~100 Hz | `sensor_msgs/Imu` |
+| `/imu/data_raw` | 10轴 IMU | ~10 Hz | `sensor_msgs/Imu` |
+
+---
+
+## 🎨 RViz 可视化
+
+项目预置了 RViz2 配置文件，可一键查看双雷达点云 + IMU 姿态：
+
+```bash
+# 终端 1：启动传感器
+ros2 launch wit_ros2_imu sensors.launch.py
+
+# 终端 2：启动可视化
+ros2 launch wit_ros2_imu show_dual_lidar.launch.py
+
+# 自定义雷达安装位置（x y z yaw 单位：米/弧度）
+ros2 launch wit_ros2_imu show_dual_lidar.launch.py x:=0.3 y:=0.0 yaw:=1.57
+```
+
+RViz 显示说明：
+
+| 显示项 | 颜色 | 话题 | 帧 |
+|--------|------|------|-----|
+| LaserScan_0 | 🔴 红色 | `/scan_0` | `laser_0` |
+| LaserScan_1 | 🟢 绿色 | `/scan_1` | `laser_1` → `laser_0` |
+| IMU (Axes) | 🟡 坐标轴 | `/imu/data_raw` | `imu_link` → `laser_0` |
+
+> 💡 如遇到 `could not connect to display` 错误，说明当前为 SSH 无桌面环境，请在 Jetson 本地桌面或使用 `ssh -X` 转发后运行。
 
 ---
 
@@ -55,12 +86,18 @@ jiantu/
 ├── wit_ros2_imu/          # 10轴 IMU ROS2 驱动 (WIT)
 │   ├── launch/
 │   │   ├── rviz_and_imu.launch.py   # 单独 IMU 启动
-│   │   └── sensors.launch.py        # ★ 双雷达+IMU 协同启动
+│   │   ├── sensors.launch.py        # ★ 双雷达+IMU 协同启动
+│   │   └── show_dual_lidar.launch.py # ★ 双雷达+IMU RViz 可视化
+│   ├── rviz/
+│   │   └── dual_lidar.rviz          # ★ RViz 预置配置
 │   ├── wit_ros2_imu/      #   imu 节点 Python 源码
 │   ├── imu_usb.rules      #   CH340 udev 规则
 │   └── bind_usb.sh        #   USB 绑定脚本
 ├── launch/                # 独立 launch 文件
-│   └── sensors_launch.py  #   独立版传感器协同启动
+│   ├── sensors_launch.py  #   独立版传感器协同启动
+│   └── show_dual_lidar.launch.py  # 独立版 RViz 可视化
+├── rviz/
+│   └── dual_lidar.rviz    #  独立版 RViz 配置
 ├── 10-axis_IMU_Module/    # IMU 原始资料 & 协议文档
 │   ├── 3.Basic application/
 │   ├── 5.Communication protocol/

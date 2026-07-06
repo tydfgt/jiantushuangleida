@@ -12,7 +12,7 @@ import time
 
 # ===== 配置 =====
 PORT = '/dev/ttyUSB0'
-BAUD = 921600  # 产品默认波特率
+BAUD = 115200  # 产品默认波特率
 BUF_LEN = 11
 
 # ===== 数据存储 =====

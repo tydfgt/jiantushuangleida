@@ -1,6 +1,6 @@
 # Jetson Orin Nano 配置 RPLidar C1(×2) + 10轴IMU 多传感器 ROS2 Humble 全流程
 
-> 本文记录在 NVIDIA Jetson Orin Nano (L4T 36.5.0) 上从零配置两个 SLAMTEC RPLidar C1 激光雷达和一个 WIT 10轴 IMU 惯导模块的完整过程。涵盖 CH340 驱动编译、brltty 冲突解决、udev 规则、ROS2 驱动包构建、双雷达话题隔离、传感器时间同步、以及一键协同启动——每一步都有可直接复制执行的命令和验证方法。
+> 本文记录在 NVIDIA Jetson Orin Nano (L4T 36.5.0) 上从零配置两个 SLAMTEC RPLidar C1 激光雷达和一个 WIT 10轴 IMU 惯导模块的完整过程。涵盖 CH340 驱动编译、brltty 冲突解决、udev 规则、ROS2 驱动包构建、双雷达话题隔离、传感器时间同步、RViz 可视化以及一键协同启动——每一步都有可直接复制执行的命令和验证方法。
 >
 > 📦 项目仓库: [Gitee](https://gitee.com/tydfgt/jiantushuangleida) | [GitHub](https://github.com/tydfgt/jiantushuangleida)
 
@@ -17,7 +17,8 @@
 - [7. 协同 Launch + 时间同步](#7-多传感器协同-launch--时间同步)
 - [8. 话题总览与数据验证](#8-话题总览与数据验证)
 - [9. 踩坑总结](#9-踩坑总结)
-- [10. 参考链接](#10-参考链接)
+- [10. RViz 可视化双雷达+IMU](#10-rviz-可视化双雷达imu)
+- [11. 参考链接](#11-参考链接)
 
 ---
 
@@ -770,7 +771,54 @@ rviz2
 
 ---
 
-## 10. 参考链接
+## 10. RViz 可视化双雷达+IMU
+
+### 10.1 预置配置
+
+项目已预置 RViz2 配置文件，包含：
+- 🔴 **LaserScan_0**：`/scan_0` 话题，红色点云
+- 🟢 **LaserScan_1**：`/scan_1` 话题，绿色点云
+- 🟡 **IMU**：`/imu/data_raw` 话题，黄色姿态箭头
+
+### 10.2 一键启动
+
+```bash
+# 终端 1：启动传感器
+cd ~/jiantu
+source install/setup.bash
+ros2 launch wit_ros2_imu sensors.launch.py
+
+# 终端 2：启动 RViz 可视化
+cd ~/jiantu
+source install/setup.bash
+ros2 launch wit_ros2_imu show_dual_lidar.launch.py
+```
+
+### 10.3 自定义雷达安装位置
+
+如果两个雷达有实际安装偏移，可通过参数指定：
+
+```bash
+# x=0.3m 表示雷达1在雷达0右侧30cm处
+ros2 launch wit_ros2_imu show_dual_lidar.launch.py x:=0.3 y:=0.0 z:=0.0 yaw:=0.0
+```
+
+### 10.4 原理说明
+
+不同传感器有不同的 `frame_id`（`laser_0` / `laser_1` / `imu_link`），要在 RViz 同一窗口下同时显示，需要 TF 变换关联：
+
+```
+laser_0 ──(static TF)──→ laser_1
+laser_0 ──(static TF)──→ imu_link
+```
+
+两个 `static_transform_publisher` 在 `show_dual_lidar.launch.py` 中自动发布。
+
+> 💡 SSH 无桌面环境会报 `could not connect to display`，需在 Jetson 本地桌面或 `ssh -X` 下运行。
+
+---
+
+## 11. 参考链接
 
 - [Slamtec sllidar_ros2](https://github.com/Slamtec/sllidar_ros2) — RPLidar ROS2 驱动
 - [WCH ch341ser_linux](https://github.com/WCHSoftGroup/ch341ser_linux) — CH340 官方 Linux 驱动
@@ -782,33 +830,4 @@ rviz2
 
 > **项目仓库**: [Gitee](https://gitee.com/tydfgt/jiantushuangleida) | [GitHub](https://github.com/tydfgt/jiantushuangleida)  
 > **硬件快照**: Jetson Orin Nano Super | L4T 36.5.0 | ROS2 Humble | RPLidar C1 ×2 + 10轴 IMU  
-> **最后更新**: 2026-07-03
-
----
-
-## 9. 踩坑总结
-
-| 坑 | 原因 | 解决 |
-|----|------|------|
-| CH340 不识别 | Jetson 内核无 `ch341.ko` | WCH 官方驱动 `ch341ser_linux` |
-| 驱动装好设备还是消失 | `brltty` 抢占串口 | `sudo apt purge brltty` |
-| udev 规则不生效 | WCH 驱动生成 `ttyCH341USB*` 而非 `ttyUSB*` | 规则匹配 `ttyCH341USB*` |
-| IMU 节点报端口被占用 | 旧进程未退出 | `sudo fuser -k /dev/ttyCH341USB0` |
-| launch 文件报 `node_executable` | ROS2 Humble 用 `executable` | 改为 `executable` |
-| `serial_baudrate` 类型错误 | ROS2 Humble 参数类型校验严格 | 传整数 `460800` 不要传字符串 `'460800'` |
-| 双雷达同时启动话题冲突 | 两个节点默认发同一个 `/scan` | 不同 node name + remap 到 `/scan_0` `/scan_1` |
-| 同型号雷达区分不了 | 串口号可能变化 | 用 ATTRS{serial} 创建 udev 规则或直接用 by-id |
-
----
-
-## 10. 参考链接
-
-- [Slamtec sllidar_ros2](https://github.com/Slamtec/sllidar_ros2)
-- [WCH CH341 官方 Linux 驱动](https://github.com/WCHSoftGroup/ch341ser_linux)
-- [brltty CH340 问题参考](https://blog.insmtr.com/2025/04/24/2025.4.24%20CH340/)
-
----
-
-> **硬件快照**: NVIDIA Jetson Orin Nano Super | L4T 36.5.0 | ROS2 Humble | RPLidar C1×2 (CP210x) + 10轴 IMU (CH340)
-> **最后更新**: 2026-07-03
-> **项目路径**: `~/jiantu/`
+> **最后更新**: 2026-07-06

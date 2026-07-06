@@ -11,7 +11,14 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' +package_name, ['launch/rviz_and_imu.launch.py', 'launch/sensors.launch.py']),
+        ('share/' + package_name, [
+            'launch/rviz_and_imu.launch.py',
+            'launch/sensors.launch.py',
+            'launch/show_dual_lidar.launch.py',
+        ]),
+        ('share/' + package_name + '/rviz', [
+            'rviz/dual_lidar.rviz',
+        ]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
