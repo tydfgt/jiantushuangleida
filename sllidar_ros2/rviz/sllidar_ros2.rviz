@@ -89,7 +89,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: System Default
-        Value: /imu/data_raw
+        Value: /imu/pose
       Value: true
   Enabled: true
   Global Options:

@@ -7,6 +7,7 @@ import threading
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
+from geometry_msgs.msg import PoseStamped
 
 key = 0
 flag = 0
@@ -159,6 +160,8 @@ class IMUDriverNode(Node):
 
         # 创建IMU数据发布器
         self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
+        # 创建位姿发布器（供 RViz Axes 显示实时姿态）
+        self.pose_pub = self.create_publisher(PoseStamped, 'imu/pose', 10)
         #self.port = self.get_parameter('port')
         #self.baud_rate = self.get_parameter('baud')
 
@@ -237,6 +240,13 @@ class IMUDriverNode(Node):
 
         # 发布IMU消息
         self.imu_pub.publish(self.imu_msg)
+
+        # 发布位姿消息（供 RViz Axes 显示）
+        pose = PoseStamped()
+        pose.header.stamp = self.imu_msg.header.stamp
+        pose.header.frame_id = 'imu_link'
+        pose.pose.orientation = self.imu_msg.orientation
+        self.pose_pub.publish(pose)
 
     def compute_orientation(self, wx, wy, wz, ax, ay, az, dt):
         # 计算旋转矩阵
